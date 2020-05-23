@@ -1,101 +1,74 @@
 import React from "react"
-import { Link, graphql } from "gatsby"
-
-import Bio from "../components/bio"
 import Layout from "../components/layout"
-import SEO from "../components/seo"
-import { rhythm, scale } from "../utils/typography"
+import Sidebar from "../components/Sidebar"
+import { graphql, Link } from "gatsby"
+import { Row, Col, Card, CardBody, CardSubtitle, Badge } from "reactstrap"
+import Img from "gatsby-image"
+import { slugify } from "../utils/utilityFunctions"
 
-const BlogPostTemplate = ({ data, pageContext, location }) => {
-  const post = data.markdownRemark
-  const siteTitle = data.site.siteMetadata.title
-  const { previous, next } = pageContext
-
+const SinglePost = ({ data }) => {
+  const post = data.markdownRemark.frontmatter
   return (
-    <Layout location={location} title={siteTitle}>
-      <SEO
-        title={post.frontmatter.title}
-        description={post.frontmatter.description || post.excerpt}
-      />
-      <article>
-        <header>
-          <h1
-            style={{
-              marginTop: rhythm(1),
-              marginBottom: 0,
-            }}
-          >
-            {post.frontmatter.title}
-          </h1>
-          <p
-            style={{
-              ...scale(-1 / 5),
-              display: `block`,
-              marginBottom: rhythm(1),
-            }}
-          >
-            {post.frontmatter.date}
-          </p>
-        </header>
-        <section dangerouslySetInnerHTML={{ __html: post.html }} />
-        <hr
-          style={{
-            marginBottom: rhythm(1),
-          }}
-        />
-        <footer>
-          <Bio />
-        </footer>
-      </article>
-
-      <nav>
-        <ul
-          style={{
-            display: `flex`,
-            flexWrap: `wrap`,
-            justifyContent: `space-between`,
-            listStyle: `none`,
-            padding: 0,
-          }}
-        >
-          <li>
-            {previous && (
-              <Link to={previous.fields.slug} rel="prev">
-                ← {previous.frontmatter.title}
-              </Link>
-            )}
-          </li>
-          <li>
-            {next && (
-              <Link to={next.fields.slug} rel="next">
-                {next.frontmatter.title} →
-              </Link>
-            )}
-          </li>
-        </ul>
-      </nav>
+    <Layout>
+      <h1>{post.title}</h1>
+      <Row>
+        <Col md="8">
+          <Card>
+            <Img
+              className="card-image-top"
+              fluid={post.image.childImageSharp.fluid}
+            />
+            <CardBody>
+              <CardSubtitle>
+                <span className="text-info">{post.date}</span> by{" "}
+                <span className="text-info">{post.author}</span>
+              </CardSubtitle>
+              <div
+                dangerouslySetInnerHTML={{ __html: data.markdownRemark.html }}
+              />
+              <ul className="post-tags">
+                {post.tags.map(tag => (
+                  <li key={tag}>
+                    <Link to={`/tag/${slugify(tag)}`}>
+                      <Badge color="primary">{tag}</Badge>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </CardBody>
+          </Card>
+        </Col>
+        <Col md="4">
+          <Sidebar />
+        </Col>
+      </Row>
     </Layout>
   )
 }
 
-export default BlogPostTemplate
-
-export const pageQuery = graphql`
-  query BlogPostBySlug($slug: String!) {
-    site {
-      siteMetadata {
-        title
-      }
-    }
+export const postQuery = graphql`
+  query blogPostBySlug($slug: String!) {
     markdownRemark(fields: { slug: { eq: $slug } }) {
       id
-      excerpt(pruneLength: 160)
       html
       frontmatter {
         title
-        date(formatString: "MMMM DD, YYYY")
-        description
+        author
+        date(formatString: "MMMM DD YYYY")
+        tags
+        image {
+          childImageSharp {
+            fluid(maxWidth: 700) {
+              ...GatsbyImageSharpFluid
+            }
+          }
+        }
+      }
+      fields {
+        slug
       }
     }
   }
 `
+
+export default SinglePost

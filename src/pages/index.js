@@ -1,72 +1,74 @@
 import React from "react"
-import { Link, graphql } from "gatsby"
+import { graphql, StaticQuery } from "gatsby"
+import { Row, Col } from "reactstrap"
 
-import Bio from "../components/bio"
 import Layout from "../components/layout"
-import SEO from "../components/seo"
-import { rhythm } from "../utils/typography"
+import Post from "../components/Post"
+import Sidebar from "../components/Sidebar"
 
-const BlogIndex = ({ data, location }) => {
-  const siteTitle = data.site.siteMetadata.title
-  const posts = data.allMarkdownRemark.edges
-
+const BlogIndex = () => {
   return (
-    <Layout location={location} title={siteTitle}>
-      <SEO title="All posts" />
-      <Bio />
-      {posts.map(({ node }) => {
-        const title = node.frontmatter.title || node.fields.slug
-        return (
-          <article key={node.fields.slug}>
-            <header>
-              <h3
-                style={{
-                  marginBottom: rhythm(1 / 4),
-                }}
-              >
-                <Link style={{ boxShadow: `none` }} to={node.fields.slug}>
-                  {title}
-                </Link>
-              </h3>
-              <small>{node.frontmatter.date}</small>
-            </header>
-            <section>
-              <p
-                dangerouslySetInnerHTML={{
-                  __html: node.frontmatter.description || node.excerpt,
-                }}
-              />
-            </section>
-          </article>
-        )
-      })}
+    <Layout>
+      <h1>hello from the index</h1>
+      <Row>
+        <Col md="8">
+          <StaticQuery
+            query={indexQuery}
+            render={data => {
+              return (
+                <div>
+                  {data.allMarkdownRemark.edges.map(({ node }) => (
+                    <Post
+                      key={node.id}
+                      title={node.frontmatter.title}
+                      author={node.frontmatter.author}
+                      slug={node.fields.slug}
+                      date={node.frontmatter.date}
+                      body={node.excerpt}
+                      fluid={node.frontmatter.image.childImageSharp.fluid}
+                      tags={node.frontmatter.tags}
+                    />
+                  ))}
+                </div>
+              )
+            }}
+          />
+        </Col>
+        <Col md="4">
+          <Sidebar />
+        </Col>
+      </Row>
     </Layout>
   )
 }
 
-export default BlogIndex
-
-export const pageQuery = graphql`
+const indexQuery = graphql`
   query {
-    site {
-      siteMetadata {
-        title
-      }
-    }
     allMarkdownRemark(sort: { fields: [frontmatter___date], order: DESC }) {
       edges {
         node {
+          id
+          frontmatter {
+            title
+            author
+            date(formatString: "MMMM DD YYYY")
+            tags
+            image {
+              childImageSharp {
+                fluid(maxWidth: 600) {
+                  ...GatsbyImageSharpFluid
+                }
+              }
+            }
+          }
           excerpt
           fields {
             slug
-          }
-          frontmatter {
-            date(formatString: "MMMM DD, YYYY")
-            title
-            description
           }
         }
       }
     }
   }
 `
+
+export default BlogIndex
